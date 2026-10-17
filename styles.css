@@ -1,0 +1,403 @@
+.workspace-leaf-content[data-type="sectioned-sidebar-view"] .view-content {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sectioned-sidebar-view {
+  /* LOCAL-PATCH 13: 行高与默认目录页的行距对齐(30px → 26px) */
+  --notion-nav-row-height: 26px;
+  --notion-nav-section-header-height: 26px;
+  --notion-nav-section-gap: 16px;
+  --notion-nav-gutter: 6px;
+  /* LOCAL-PATCH 35: 每级缩进 12px → 15px(用户选的折中,原生文件列表是 17px);竖线位置是同一个变量算的,自动跟着走 */
+  --notion-nav-indent: 15px;
+  --notion-nav-bg: var(--background-secondary);
+  --notion-nav-text: var(--text-normal);
+  --notion-nav-muted: var(--text-muted);
+  --notion-nav-hover: var(--background-modifier-hover);
+  --notion-nav-active: var(--background-modifier-active-hover);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--notion-nav-bg);
+  color: var(--notion-nav-text);
+  font-family: var(--font-interface);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.theme-light .sectioned-sidebar-view {
+  /* LOCAL-PATCH 14: 背景跟库里的 --background-secondary(#F9F9F9)一致 */
+  --notion-nav-bg: #F9F9F9;
+  --notion-nav-text: #37352f;
+  --notion-nav-muted: rgba(55, 53, 47, 0.5);
+  --notion-nav-hover: rgba(55, 53, 47, 0.08);
+  --notion-nav-active: rgba(55, 53, 47, 0.08);
+}
+
+.theme-dark .sectioned-sidebar-view {
+  --notion-nav-bg: #202020;
+  --notion-nav-text: rgba(255, 255, 255, 0.81);
+  --notion-nav-muted: rgba(255, 255, 255, 0.44);
+  --notion-nav-hover: rgba(255, 255, 255, 0.055);
+  --notion-nav-active: rgba(255, 255, 255, 0.075);
+}
+
+/* LOCAL-PATCH 23: 工具栏相关样式已删 —— 工具栏 PATCH 1 就删了(toolbar / title / mark / toolbar-actions) */
+/* LOCAL-PATCH 24: 工具条以新形态回来 —— 四个开关式按钮;上面那批旧类名(toolbar / title / mark / toolbar-actions)依旧不再使用 */
+/* LOCAL-PATCH 26: 按钮居中并跟核心文件列表那排同一套尺寸 —— 外层直接拿核心的 .nav-buttons-container,
+   尺寸/间距/悬停/激活态都由主题那条规则给(.nav-action-button);这里只写居中与这块自己的内边距,
+   居中显式写死,不依赖核心那条 .nav-buttons-container{justify-content:center} 将来是否还在 */
+.sectioned-sidebar-toolbar {
+  justify-content: center;
+  padding: var(--size-4-2) var(--size-4-2) var(--size-4-1);
+}
+
+/* LOCAL-PATCH 43: 置灰的工具条按钮(当前只有「全部展开」—— 一个可展开的文件夹都没有时) */
+.sectioned-sidebar-toolbar-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sectioned-sidebar-toolbar-button:disabled:hover {
+  background: transparent;
+}
+
+.sectioned-sidebar-row-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  /* LOCAL-PATCH 43: 原来这两条在文件后半段又声明了一遍,合并到这里 */
+  visibility: hidden;
+  gap: 0;
+}
+
+.sectioned-sidebar-sections {
+  flex: 1;
+  overflow: auto;
+  /* LOCAL-PATCH 34: 整块目录(含竖线)向右移 4px —— 左内边距 4px → 8px */
+  padding: 4px 4px 18px 8px;
+  scrollbar-gutter: stable;
+}
+
+.sectioned-sidebar-section + .sectioned-sidebar-section {
+  margin-top: var(--notion-nav-section-gap);
+}
+
+.sectioned-sidebar-row {
+  position: relative;
+  display: grid;
+  /* LOCAL-PATCH 43: 基础三列 = 行本身的布局(箭头/名字/按钮);分区标题自己覆盖成两列 */
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: var(--notion-nav-row-height);
+  padding: 0 4px 0 calc(var(--notion-nav-gutter) + var(--nav-depth, 0) * var(--notion-nav-indent));
+  border-radius: 4px;
+  color: var(--notion-nav-text);
+  cursor: default;
+  outline: none;
+}
+
+.sectioned-sidebar-row:hover,
+.sectioned-sidebar-row:focus-visible {
+  background: var(--notion-nav-hover);
+}
+
+.sectioned-sidebar-row:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--interactive-accent);
+}
+
+.sectioned-sidebar-section-header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: var(--notion-nav-section-header-height);
+  margin-bottom: 1px;
+  border: 0;
+  background: transparent;
+  color: var(--notion-nav-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  box-shadow: none;
+}
+
+.sectioned-sidebar-section-header .sectioned-sidebar-row-label {
+  color: var(--notion-nav-muted);
+}
+
+/* LOCAL-PATCH 23: 分区标题里的箭头 / 文件夹图标的 display:none 规则已删(节点本身不再生成) */
+
+.sectioned-sidebar-section-header:hover,
+.sectioned-sidebar-section-header:focus-visible {
+  background: transparent;
+}
+
+.sectioned-sidebar-item {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* LOCAL-PATCH 15: 行首图标槽的规则已删(插件不再生成该元素) */
+/* LOCAL-PATCH 21: 双击改名用的输入框直接用 Obsidian 原生外观,此文件里不再有相关规则 */
+
+.sectioned-sidebar-item > .sectioned-sidebar-row-label {
+  grid-column: 2;
+  grid-row: 1;
+  line-height: 20px;
+}
+
+.sectioned-sidebar-item > .sectioned-sidebar-row-actions {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* LOCAL-PATCH 15: 文件夹行的箭头常显(原来只在 hover/focus 时才显示;行首图标已删,
+   所以不再需要 hover 时把图标让位的规则) */
+.sectioned-sidebar-item > .sectioned-sidebar-disclosure {
+  display: inline-flex;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sectioned-sidebar-item.is-active {
+  background: var(--notion-nav-active);
+  color: var(--notion-nav-text);
+  font-weight: 500;
+}
+
+/* LOCAL-PATCH 43: 当前笔记所在的那几层文件夹 —— 给一层比当前行更淡的底色(类名早就有,一直没样式) */
+.sectioned-sidebar-item.is-active-parent {
+  background: var(--notion-nav-hover);
+}
+
+.sectioned-sidebar-row-label {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sectioned-sidebar-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 24px;
+  color: var(--notion-nav-muted);
+}
+
+.sectioned-sidebar-slot svg,
+.sectioned-sidebar-icon-button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.8;
+}
+
+/* LOCAL-PATCH 15: emoji 槽样式已删(emoji 现在留在名字文字里) */
+
+.sectioned-sidebar-disclosure svg {
+  width: 13px;
+  height: 13px;
+}
+
+.sectioned-sidebar-row:hover .sectioned-sidebar-row-actions,
+.sectioned-sidebar-row:focus-within .sectioned-sidebar-row-actions {
+  visibility: visible;
+}
+
+/* LOCAL-PATCH 43: 触屏上没有 hover(manifest 写的是不限桌面)—— 这类设备上按钮常显,别等悬停 */
+@media (hover: none) {
+  .sectioned-sidebar-row-actions {
+    visibility: visible;
+  }
+}
+
+.sectioned-sidebar-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--notion-nav-muted);
+}
+
+.sectioned-sidebar-icon-button:hover {
+  background: var(--notion-nav-hover);
+  color: var(--notion-nav-text);
+}
+
+.sectioned-sidebar-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sectioned-sidebar-section-body {
+  position: relative;
+}
+
+.sectioned-sidebar-children {
+  position: relative;
+}
+
+/* LOCAL-PATCH 33: 层级竖线 —— 跟核心文件列表同一套 token(宽 1px、12% 灰，亮暗主题自动跟)
+   画法:每个「文件夹的子项块」自己画一条线(容器已 position:relative)，横坐标对齐父级那一行的箭头列中心
+   (行左内边距 6px + 深度×--notion-nav-indent + 箭头槽 20px 的一半 = 16px + 缩进×父深度;
+   缩进 PATCH 35 改成 15px 后位置仍是同一个变量算出来的,自然对齐)
+   嵌套时每级各画一条，外层线自然贯穿到最深一级；分区下第一层没有 children 容器，所以不画线 */
+.sectioned-sidebar-children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--notion-nav-gutter) + var(--nav-parent-depth, 0) * var(--notion-nav-indent) + 10px);
+  width: var(--nav-indentation-guide-width, 1px);
+  background: var(--nav-indentation-guide-color, color-mix(in oklch, currentColor 12%, transparent));
+  pointer-events: none;
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"] .sectioned-sidebar-empty {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: var(--notion-nav-row-height);
+  padding: 0 var(--notion-nav-gutter);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--notion-nav-muted);
+  font-family: inherit;
+  /* LOCAL-PATCH 43: 跟行字号一起变(以前这里是写死的 14px,调行字号时这一行不动) */
+  font-size: var(--ss-row-size, 14px);
+  font-weight: 400;
+  text-align: left;
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"] .sectioned-sidebar-empty::before {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  min-width: 20px;
+  font-size: 16px;
+  content: "+";
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"] .sectioned-sidebar-empty:hover {
+  background: var(--notion-nav-hover);
+  color: var(--notion-nav-text);
+}
+
+.sectioned-sidebar-item.is-missing {
+  /* LOCAL-PATCH 43: 与其他行同一套 token(以前用核心的 --text-faint,一份导航三套颜色来源) */
+  color: var(--notion-nav-muted);
+  text-decoration: line-through;
+}
+
+/* LOCAL-PATCH 39: 拖放 —— 源行变淡;落点 = 文件夹行(移进去)或系统分区(移到库根) */
+.sectioned-sidebar-item.is-dragging {
+  opacity: 0.45;
+}
+
+.sectioned-sidebar-item.is-drop-target {
+  background: var(--notion-nav-hover);
+  box-shadow: inset 0 0 0 1px var(--interactive-accent);
+}
+
+.sectioned-sidebar-section.is-drop-root {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--interactive-accent);
+}
+
+.sectioned-sidebar-modal-description {
+  margin: -4px 0 16px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  line-height: 1.5;
+}
+
+.sectioned-sidebar-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* LOCAL-PATCH 27: 弹窗标题下只剩一条线 —— 标题自己那条(库里 h2 片段给的)加上核心给「弹窗里非首行设置行」
+   的顶部分割线(.modal:not(.mod-settings) .setting-item:not(.setting-item-heading)),两条在标题下叠成双线。
+   这里去掉设置行那条(本插件弹窗都只有一行设置,行间不需要分隔线)。
+   选择器刻意写成跟核心那条同款、级别更高(5 比 4):只写 .sectioned-sidebar-modal .setting-item(2)会被核心压掉,
+   等于没写(拿真 app.css 搭复刻页实测确认过)。 */
+.modal:not(.mod-settings) .sectioned-sidebar-modal .setting-item:not(.setting-item-heading) {
+  border-top: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sectioned-sidebar-row,
+  .sectioned-sidebar-icon-button {
+    transition: background-color 80ms ease, color 80ms ease;
+  }
+}
+
+/* ===== LOCAL-PATCH 5: 设置页的配色与字号(见 ../sectioned-sidebar-patch/patch.py) =====
+   变量没设 = 回落到插件原本的颜色 / 字号(标题 12px、行 14px) */
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-section-header
+  > .sectioned-sidebar-row-label {
+  color: var(--ss-title-color, var(--notion-nav-muted));
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-item
+  > .sectioned-sidebar-row-label {
+  color: var(--ss-row-color, var(--notion-nav-text));
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-section-header {
+  font-size: var(--ss-title-size, 12px);
+}
+
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-item {
+  font-size: var(--ss-row-size, 14px);
+}
+
+/* 行字号放大时行高跟着涨;14px 时算出来是 19.88px < 20px,仍是原来的行高 */
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-item
+  > .sectioned-sidebar-row-label {
+  line-height: max(20px, calc(var(--ss-row-size, 14px) * 1.42));
+}
+
+/* LOCAL-PATCH 14: 展开的文件夹条目用主题色 + 加粗(对齐 snippets/ui-styles.css 里
+   「展开的文件夹标题用主题色」;aria-expanded="true" 是插件给展开行的标记) */
+.workspace-leaf-content[data-type="sectioned-sidebar-view"]
+  .sectioned-sidebar-item.is-folder[aria-expanded="true"]
+  > .sectioned-sidebar-row-label {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+
+/* 系统分区(根目录直连)没有可显示项时的提示行 */
+.workspace-leaf-content[data-type="sectioned-sidebar-view"] .sectioned-sidebar-live-empty {
+  display: flex;
+  align-items: center;
+  height: var(--notion-nav-row-height);
+  padding: 0 var(--notion-nav-gutter);
+  color: var(--ss-row-color, var(--notion-nav-muted));
+  font-size: 12px;
+}

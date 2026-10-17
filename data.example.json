@@ -1,0 +1,46 @@
+{
+  "language": "zh",
+  "autoOpen": true,
+  "sortOrder": "alphabetical",
+  "revealActiveFile": false,
+  "keepNativeExplorer": false,
+  "expandedFolders": [],
+  "colors": {
+    "title": "",
+    "row": ""
+  },
+  "sizes": {
+    "title": "",
+    "row": ""
+  },
+  "sections": [
+    {
+      "id": "section-live-rootFiles",
+      "name": "InBox",
+      "collapsed": false,
+      "items": [],
+      "source": "rootFiles",
+      "exclude": []
+    },
+    {
+      "id": "section-live-rootFolders",
+      "name": "Folder",
+      "collapsed": false,
+      "items": [],
+      "source": "rootFolders",
+      "exclude": [
+        "_uploads"
+      ]
+    },
+    {
+      "id": "section-example",
+      "name": "Project",
+      "collapsed": false,
+      "items": [
+        "project/example-folder"
+      ],
+      "source": "",
+      "exclude": []
+    }
+  ]
+}
