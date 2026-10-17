@@ -193,6 +193,41 @@
   stroke-width: 1.8;
 }
 
+/* LOCAL-PATCH 44: Iconic 图标槽 —— 只在有图标的行出现;文件夹行多占一格箭头后的位置,
+   文件行借用原本空着的箭头格(所以有图标的文件行文字位置不变) */
+.sectioned-sidebar-item.has-icon {
+  grid-template-columns: 20px 20px minmax(0, 1fr) auto;
+}
+
+.sectioned-sidebar-item.has-icon > .sectioned-sidebar-item-icon {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.sectioned-sidebar-item.has-icon > .sectioned-sidebar-row-label {
+  grid-column: 3;
+}
+
+.sectioned-sidebar-item.has-icon > .sectioned-sidebar-row-actions {
+  grid-column: 4;
+}
+
+.sectioned-sidebar-item.is-file.has-icon {
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+}
+
+.sectioned-sidebar-item.is-file.has-icon > .sectioned-sidebar-item-icon {
+  grid-column: 1;
+}
+
+.sectioned-sidebar-item.is-file.has-icon > .sectioned-sidebar-row-label {
+  grid-column: 2;
+}
+
+.sectioned-sidebar-item.is-file.has-icon > .sectioned-sidebar-row-actions {
+  grid-column: 3;
+}
+
 /* LOCAL-PATCH 15: emoji 槽样式已删(emoji 现在留在名字文字里) */
 
 .sectioned-sidebar-disclosure svg {

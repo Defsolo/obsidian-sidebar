@@ -20,6 +20,25 @@ const VIEW_TYPE = "sectioned-sidebar-view";
 const LANGUAGE_OPTIONS = new Set(["auto", "zh", "en"]);
 // LOCAL-PATCH 23: LEADING_EMOJI_RE / ICON_CHOICES / DEFAULT_SECTIONS 的 icon 字段已删
 // (PATCH 15 行首不再有图标槽、PATCH 10 起分区图标已取消,这些常量与字段没有任何引用了)
+// LOCAL-PATCH 44: Iconic 的命名色都落在 Obsidian 的 CSS 变量上(与它 toRgb 的映射一致),别的值原样用
+const ICONIC_COLOR_VARS = Object.freeze({
+  red: "--color-red",
+  orange: "--color-orange",
+  yellow: "--color-yellow",
+  green: "--color-green",
+  cyan: "--color-cyan",
+  blue: "--color-blue",
+  purple: "--color-purple",
+  pink: "--color-pink",
+  gray: "--color-base-70",
+});
+function iconicColorCss(color) {
+  if (!color) return "";
+  const variable = ICONIC_COLOR_VARS[color];
+  if (variable) return `var(${variable})`;
+  return typeof CSS === "undefined" || CSS.supports?.("color", color) ? color : "";
+}
+
 const DEFAULT_SECTIONS = [
   { key: "defaultFavorites" },
   { key: "defaultShared" },
@@ -583,6 +602,8 @@ class SectionedSidebarView extends ItemView {
   }
 
   render() {
+    // LOCAL-PATCH 44: Iconic 可能比本插件晚装载(或在运行中重新启用),每次渲染顺手补挂一次
+    this.plugin.watchIconicChanges();
     const { contentEl } = this;
     const previousScrollTop = contentEl.querySelector(".sectioned-sidebar-sections")?.scrollTop || 0;
     // LOCAL-PATCH 43: 每次 file-open / create 都整棵重建,键盘焦点会丢 —— 记住原来聚焦的那一行,建完再还回去
@@ -980,8 +1001,14 @@ class SectionedSidebarView extends ItemView {
 
     const disclosure = row.createSpan({ cls: "sectioned-sidebar-slot sectioned-sidebar-disclosure" });
     if (isFolder) setIcon(disclosure, isExpanded ? "chevron-down" : "chevron-right");
-    // LOCAL-PATCH 15: 不再生成行首图标槽(要显示 emoji 就把 emoji 留在名字里)
+    // LOCAL-PATCH 15: 不再无条件生成行首图标槽(要显示 emoji 就把 emoji 留在名字里)
     // LOCAL-PATCH 23: presentationForItem / labelForItem / iconForItem 已删,名字直接取 item.name
+    // LOCAL-PATCH 44: Iconic 只画原生文件列表,这里按它同一套判定补一格图标(没图标/没规则命中的行不动)
+    const iconicIcon = this.getIconicIcon(item, isFolder);
+    if (iconicIcon) {
+      row.addClass("has-icon");
+      this.renderIconicIcon(row.createSpan({ cls: "sectioned-sidebar-slot sectioned-sidebar-item-icon" }), iconicIcon);
+    }
     row.createSpan({ cls: "sectioned-sidebar-row-label", text: item.name });
 
     if (pinnedRoot) {
@@ -1020,6 +1047,34 @@ class SectionedSidebarView extends ItemView {
         this.renderVaultItem(children, section, child, depth + 1, false);
       }
     }
+  }
+
+  // LOCAL-PATCH 44: 图标判定的来源是 Iconic 自己的 ruleManager(与原生列表同一个结果),没有规则再看显式设置;
+  // 没装 Iconic、或它内部接口改名了,一律返回 null —— 导航照常渲染,不因为图标挂掉
+  getIconicIcon(item, isFolder) {
+    const iconic = this.app.plugins?.plugins?.iconic;
+    if (!iconic || typeof iconic.getFileItem !== "function") return null;
+    try {
+      const entry = iconic.getFileItem(item.path);
+      if (!entry) return null;
+      const ruling = iconic.ruleManager?.checkRuling?.(isFolder ? "folder" : "file", entry.id) ?? entry;
+      const icon = ruling.icon || entry.icon || ruling.iconDefault || entry.iconDefault || null;
+      const color = ruling.color || entry.color || null;
+      return icon || color ? { icon, color } : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  renderIconicIcon(el, { icon, color }) {
+    // Iconic 存的是 lucide-xxx 或 emoji 原文(对应它自己的两个图标集合)
+    if (icon && icon.startsWith("lucide-")) setIcon(el, icon);
+    else if (icon) {
+      el.setText(icon);
+      el.style.setProperty("font-size", "14px");
+    }
+    const cssColor = iconicColorCss(color);
+    if (cssColor) el.style.setProperty("color", cssColor);
   }
 
   sortedChildren(folder) {
@@ -1835,6 +1890,26 @@ module.exports = class SectionedSidebarPlugin extends Plugin {
   }
 
   // LOCAL-PATCH 22: 批量创建/同步会连着触发很多次(create 逐条来),合并到一帧只重建一次
+  // LOCAL-PATCH 44: Iconic 没有对外事件;包住它的保存/刷新入口,图标改完导航才看得到变化
+  watchIconicChanges() {
+    const iconic = this.app.plugins?.plugins?.iconic;
+    if (!iconic || iconic.__sectionedSidebarWatched) return;
+    iconic.__sectionedSidebarWatched = true;
+    const refresh = () => this.refreshView();
+    const wrap = (holder, name) => {
+      if (!holder || typeof holder[name] !== "function") return;
+      const original = holder[name];
+      holder[name] = function (...args) {
+        const result = original.apply(this, args);
+        refresh();
+        return result;
+      };
+    };
+    wrap(iconic, "saveFileIcon");
+    wrap(iconic, "refreshManagers");
+    wrap(iconic.ruleManager, "updateRulings");
+  }
+
   refreshView() {
     if (this.refreshQueued) return;
     this.refreshQueued = true;
