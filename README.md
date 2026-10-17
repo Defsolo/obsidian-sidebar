@@ -35,4 +35,4 @@ Obsidian 左侧导航插件。基于 [blank247d / sectioned-sidebar](https://git
 
 ## 许可
 
-MIT。原始版权归 blank247d，本仓库的修改版权归 hlbb，详见 [LICENSE](LICENSE)。
+MIT，见 [LICENSE](LICENSE)。LICENSE 原文（版权归 blank247d）保持上游写法不变；本仓库的修改版权归 hlbb。
